@@ -1,9 +1,10 @@
 """LiteratureAdvisor · FastAPI 入口
 
-Phase 1 MVP 骨架 — v0.1.0
+Phase 1 MVP 骨架 — v0.2.0
 - 只读 `data/*.json` 文件,零数据库
-- 4 个 GET 接口:/ /works /works/{id} /authors /authors/{id}
+- 5 个 GET 接口:/ /works /works/{id} /authors /authors/{id} /analyze/{work_id}
 - 可选 query 过滤:works 支持 genre=poetry/novel/...,authors 支持 dynasty=唐代
+- /analyze/{work_id} 从 data/analyzes/{work_id}.json 读 5 维精读结果
 """
 from __future__ import annotations
 
@@ -15,11 +16,12 @@ from fastapi import FastAPI, HTTPException, Query
 
 # 数据目录 = 项目根下的 data/
 DATA_DIR = Path(__file__).resolve().parent.parent / "data"
+ANALYZES_DIR = DATA_DIR / "analyzes"
 
 app = FastAPI(
     title="LiteratureAdvisor API",
-    version="0.1.0",
-    description="文学顾问 · 作品库 + 作家库 读接口骨架(Phase 1 MVP 起步)",
+    version="0.2.0",
+    description="文学顾问 · 作品库 + 作家库 + 精读 读接口骨架(Phase 1 MVP 起步)",
 )
 
 
@@ -34,6 +36,27 @@ def _load_json(name: str) -> dict:
         return json.load(f)
 
 
+def _load_analyze(work_id: str) -> dict:
+    """加载 data/analyzes/{work_id}.json 精读结果;缺失则 404。"""
+    path = ANALYZES_DIR / f"{work_id}.json"
+    if not path.exists():
+        raise HTTPException(
+            status_code=404,
+            detail=f"analyze not found: {work_id} (no entry under data/analyzes/)",
+        )
+    with path.open("r", encoding="utf-8") as f:
+        return json.load(f)
+
+
+def _work_exists(work_id: str) -> bool:
+    """检查 works.json 里是否有此 work_id(用于 /analyze 二次校验)。"""
+    try:
+        data = _load_json("works.json")
+    except HTTPException:
+        return False
+    return any(w.get("id") == work_id for w in data.get("works", []))
+
+
 # ---------- 路由 ----------
 
 @app.get("/", tags=["meta"])
@@ -43,7 +66,13 @@ def root() -> dict:
         "service": "LiteratureAdvisor",
         "version": app.version,
         "phase": "1-MVP-skeleton",
-        "endpoints": ["/works", "/works/{work_id}", "/authors", "/authors/{author_id}"],
+        "endpoints": [
+            "/works",
+            "/works/{work_id}",
+            "/authors",
+            "/authors/{author_id}",
+            "/analyze/{work_id}",
+        ],
     }
 
 
@@ -113,3 +142,19 @@ def get_author(author_id: str) -> dict:
         if a.get("id") == author_id:
             return a
     raise HTTPException(status_code=404, detail=f"author not found: {author_id}")
+
+
+@app.get("/analyze/{work_id}", tags=["analyze"])
+def get_analyze(work_id: str) -> dict:
+    """按 work_id 查 5 维精读结果(结构/主题/语言/修辞/影响)。
+
+    - 数据源:`data/analyzes/{work_id}.json`
+    - 模板:见 `data/analyze-template.md` v1.0
+    - 二次校验:work_id 必须在 `works.json` 中存在(防止脏数据)
+    """
+    if not _work_exists(work_id):
+        raise HTTPException(
+            status_code=404,
+            detail=f"work_id not in works.json: {work_id}",
+        )
+    return _load_analyze(work_id)
