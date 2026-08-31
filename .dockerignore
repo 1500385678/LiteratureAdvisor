@@ -1,0 +1,31 @@
+# LiteratureAdvisor · Docker 构建忽略
+# 减小构建上下文,避免敏感/冗余文件进镜像
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.venv/
+venv/
+
+# 日志与巡检(不打包进镜像)
+.Log/
+*.log
+
+# 系统
+.DS_Store
+.git/
+.gitignore
+
+# 前端(Phase 1 React 启动后会建 frontend/,先忽略)
+frontend/node_modules/
+frontend/dist/
+
+# 编辑器
+.vscode/
+.idea/
+
+# 文档草稿
+.plan/
+文学顾问开发架构与计划.md

@@ -1,0 +1,35 @@
+# LiteratureAdvisor · 一键启动
+# Phase 1 MVP 部署基线 · 2026-09-01
+#
+# 用法:
+#   docker compose up -d --build    # 构建 + 后台启动
+#   docker compose logs -f           # 实时日志
+#   docker compose down              # 停止
+#   curl http://localhost:8000/      # 健康检查
+#
+# 注意:当前阶段数据用 bind mount 直接挂 ./data,方便 dev 阶段 hot reload;
+#      生产建议改 volume + S3/OSS 备份。
+
+version: "3.9"
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: literatureadvisor:phase1-v0.3.0
+    container_name: literatureadvisor-api
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - TZ=Asia/Shanghai
+    volumes:
+      # 只挂 data/,让 Phase 0 扩量(11→30 作品)/作家扩量(20→50)直接生效
+      - ./data:/app/data:ro
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/').read()"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
