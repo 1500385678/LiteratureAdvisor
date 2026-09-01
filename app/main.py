@@ -1,27 +1,38 @@
 """LiteratureAdvisor · FastAPI 入口
 
-Phase 1 MVP 骨架 — v0.2.0
-- 只读 `data/*.json` 文件,零数据库
-- 5 个 GET 接口:/ /works /works/{id} /authors /authors/{id} /analyze/{work_id}
+Phase 1 MVP 骨架 — v0.4.0-phase1-feedback
+- 只读 `data/*.json` 文件,零数据库(作品/作家/精读走文件,/feedback 走内存)
+- 7 个 routes:/ /works /works/{id} /authors /authors/{id} /analyze/{work_id} /feedback(POST) /feedback/{id}(GET)
 - 可选 query 过滤:works 支持 genre=poetry/novel/...,authors 支持 dynasty=唐代
 - /analyze/{work_id} 从 data/analyzes/{work_id}.json 读 5 维精读结果
+- /feedback(POST) 接受 {text, user_id} 返回 5 维评分占位(风格/结构/语言/情感/可读性)
+  - 0 调 LLM,实现为基于 text 长度的简单启发式 — 纯占位数据不可信,前端可渲染
+  - 结果存内存 dict(最近 50 条,进程重启即失),占位存储
 """
 from __future__ import annotations
 
 import json
+import uuid
+from collections import deque
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Optional
 
 from fastapi import FastAPI, HTTPException, Query
+from pydantic import BaseModel, Field
 
 # 数据目录 = 项目根下的 data/
 DATA_DIR = Path(__file__).resolve().parent.parent / "data"
 ANALYZES_DIR = DATA_DIR / "analyzes"
 
+# /feedback 占位存储:进程内 deque,最近 50 条 POST 结果
+_FEEDBACK_STORE: dict[str, dict] = {}
+_FEEDBACK_ORDER: deque[str] = deque(maxlen=50)
+
 app = FastAPI(
     title="LiteratureAdvisor API",
-    version="0.2.0",
-    description="文学顾问 · 作品库 + 作家库 + 精读 读接口骨架(Phase 1 MVP 起步)",
+    version="0.4.0-phase1-feedback",
+    description="文学顾问 · 作品库 + 作家库 + 精读 + 写作反馈 读/写接口骨架(Phase 1 MVP 中段)",
 )
 
 
@@ -72,6 +83,8 @@ def root() -> dict:
             "/authors",
             "/authors/{author_id}",
             "/analyze/{work_id}",
+            "/feedback",
+            "/feedback/{feedback_id}",
         ],
     }
 
@@ -158,3 +171,91 @@ def get_analyze(work_id: str) -> dict:
             detail=f"work_id not in works.json: {work_id}",
         )
     return _load_analyze(work_id)
+
+
+# ---------- /feedback 写作反馈骨架(v0.4.0-phase1-feedback) ----------
+
+class FeedbackRequest(BaseModel):
+    """写作反馈入参。"""
+    text: str = Field(..., min_length=1, max_length=10_000, description="用户待评文本(1-10000 字)")
+    user_id: str = Field(..., min_length=1, max_length=64, description="用户标识")
+
+
+def _heuristic_score(text: str, dim: str) -> int:
+    """5 维评分的占位启发式(0 调 LLM,仅做长度相关映射)。
+
+    - 风格/语言/可读性:与 text 长度正相关,50-500 字之间给 70-85 分
+    - 结构:与段落数(双换行)正相关,1 段 60,2 段 75,3+ 段 85
+    - 情感:与中英标点(!?。!?~)密度相关,密度高给高分
+    - 评分区间统一 0-100,仅占位,不可作为真实反馈
+    """
+    n = len(text)
+    if dim in ("style", "language", "readability"):
+        # 50-500 字 → 70-85,极短/极长降分
+        if n < 20:
+            return 50
+        if n > 2000:
+            return 65
+        # 线性映射 50→70,500→85
+        return min(85, 70 + (n - 50) * 15 // 450)
+    if dim == "structure":
+        paras = max(1, text.count("\n\n") + 1)
+        return {1: 60, 2: 75, 3: 82}.get(paras, 85)
+    if dim == "emotion":
+        marks = sum(text.count(c) for c in "!?。!?~")
+        density = marks / max(n, 1)
+        if density > 0.05:
+            return 88
+        if density > 0.02:
+            return 78
+        return 65
+    return 70  # 兜底
+
+
+@app.post("/feedback", tags=["feedback"])
+def post_feedback(req: FeedbackRequest) -> dict:
+    """写作反馈 POST(占位版,0 调 LLM)。
+
+    - 入参:{text: str(1-10000), user_id: str(1-64)}
+    - 出参:{feedback_id, created_at, user_id, text_length, word_count, scores{5 维}, placeholder: true}
+    - 存储:进程内 _FEEDBACK_STORE(最近 50 条,重启即失)
+    """
+    text = req.text
+    user_id = req.user_id
+    feedback_id = uuid.uuid4().hex[:8]
+    created_at = datetime.now(timezone.utc).isoformat()
+    text_length = len(text)
+    word_count = len(text.split())
+
+    scores = {
+        "style": _heuristic_score(text, "style"),
+        "structure": _heuristic_score(text, "structure"),
+        "language": _heuristic_score(text, "language"),
+        "emotion": _heuristic_score(text, "emotion"),
+        "readability": _heuristic_score(text, "readability"),
+    }
+
+    record = {
+        "feedback_id": feedback_id,
+        "created_at": created_at,
+        "user_id": user_id,
+        "text_length": text_length,
+        "word_count": word_count,
+        "scores": scores,
+        "placeholder": True,  # 显式标记,前端可识别为占位数据
+    }
+    _FEEDBACK_STORE[feedback_id] = record
+    _FEEDBACK_ORDER.append(feedback_id)
+    return record
+
+
+@app.get("/feedback/{feedback_id}", tags=["feedback"])
+def get_feedback(feedback_id: str) -> dict:
+    """按 feedback_id 查单条反馈(只查最近 50 条,超出即失)。"""
+    rec = _FEEDBACK_STORE.get(feedback_id)
+    if rec is None:
+        raise HTTPException(
+            status_code=404,
+            detail=f"feedback not found: {feedback_id} (only last 50 in-memory)",
+        )
+    return rec
