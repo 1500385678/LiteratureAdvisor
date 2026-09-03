@@ -1,0 +1,51 @@
+{
+  "work_id": "cien-anos-soledad",
+  "title": "百年孤独",
+  "title_en": "One Hundred Years of Solitude",
+  "analyzed_at": "2026-09-04",
+  "analyzer": "08-文学-Literature",
+  "template_version": "analyze-template-v1.0",
+  "dimensions": {
+    "structure": {
+      "form": "长篇小说(章回体变奏)",
+      "narrative_pov": "全知外视角,家族编年体",
+      "timeline": "百年家族循环,过去-现在-未来交叠",
+      "chapters_or_parts": "20 章,对应马孔多小镇从建立到消亡的 100 年",
+      "structural_features": ["环形时间结构", "命名重复(乌尔苏拉/何塞/奥雷里亚诺)", "预言自我实现", "羊皮卷终章揭晓"]
+    },
+    "themes": {
+      "primary": ["孤独的宿命", "时间循环", "文明的兴衰"],
+      "secondary": ["家族重复的命运", "拉丁美洲历史寓言", "爱情与权力", "记忆与遗忘"],
+      "thesis": "孤独是马孔多家族乃至整个拉丁美洲的原罪,唯有接受循环的悲剧本质才能打破它"
+    },
+    "language": {
+      "register": "西班牙语现代派,诗意叙事",
+      "dialect": "加勒比海地区西语,口叙事",
+      "lexicon_features": ["炼金术/吉卜赛异象词汇", "圣经式句法", "循环句式", "潮湿/炎热感官词"],
+      "style_period": "拉美文学爆炸期(Boom)代表"
+    },
+    "rhetoric": {
+      "figures": ["魔幻现实主义(鬼魂/黄蝴蝶/失眠瘟疫)", "象征(黄花朵/大丽花/小金鱼)", "夸张(家族规模)", "预言(墨尔基阿德斯羊皮卷)"],
+      "symbols": ["马孔多小镇(拉美缩影)", "黄蝴蝶(死亡的预兆)", "小金鱼(重复的徒劳)", "羊皮卷(命运自述)"],
+      "irony": "家族世代试图打破孤独,最终被预言的孤独本身吞噬"
+    },
+    "impact": {
+      "literary_history": "魔幻现实主义全球化的奠基之作,1967 年出版,1982 年马尔克斯获诺贝尔文学奖",
+      "cross_cultural": "拉美文学爆炸(Boom)旗手,影响全球数十代作家(莫言/陈忠实/阿摩司·奥兹/村上春树均公开承认影响)",
+      "modern_influence": ["中国大陆 1980s 寻根文学浪潮", "中国魔幻现实主义流派(莫言/韩少功)", "Netflix 2024 剧集改编", "全球拉美研究复兴"]
+    }
+  },
+  "score": {
+    "structure": 8.5,
+    "themes": 9.2,
+    "language": 8.8,
+    "rhetoric": 9.0,
+    "impact": 9.5,
+    "overall": 9.0
+  },
+  "meta": {
+    "weighting": {"structure": 0.20, "themes": 0.25, "language": 0.20, "rhetoric": 0.15, "impact": 0.20},
+    "source": "data/analyze-template.md v1.0 + _LiteratureLib/04_经典作品赏析/经典作品赏析.md(西方经典节选)",
+    "phase": "Phase 1 MVP · /analyze 第 2 部精读入库(西方经典 · 魔幻现实主义)"
+  }
+}
