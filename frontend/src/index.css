@@ -1,0 +1,6 @@
+/* LiteratureAdvisor · Phase 1 第 5 步骨架样式 */
+body { margin: 0; background: #fafaf7; color: #222; }
+a { color: #8b5a2b; text-decoration: none; }
+a:hover { text-decoration: underline; }
+h1 { color: #3a2a1a; }
+h2 { color: #5a4030; border-bottom: 1px solid #e0d8c8; padding-bottom: 8px; }
