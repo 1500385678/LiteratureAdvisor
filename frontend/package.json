@@ -1,8 +1,8 @@
 {
   "name": "literature-advisor-frontend",
-  "version": "0.5.0-phase1-frontend",
+  "version": "0.6.0-phase1-frontend-works",
   "private": true,
-  "description": "LiteratureAdvisor Web App · Phase 1 第 5 步 React 骨架",
+  "description": "LiteratureAdvisor Web App · Phase 1 第 5 步 v0.6.0 · Works 列表接 /api/works",
   "type": "module",
   "scripts": {
     "dev": "vite",

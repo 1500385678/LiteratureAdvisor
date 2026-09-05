@@ -1,6 +1,6 @@
 # LiteratureAdvisor · Frontend (Phase 1 第 5 步)
 
-> 版本:v0.5.0-phase1-frontend · 2026-09-05
+> 版本:v0.6.0-phase1-frontend-works · 2026-09-06
 
 ## 启动
 
@@ -27,8 +27,8 @@ npm run dev      # 起 5173 端口
 
 ## Phase 路线
 
-- [x] v0.5.0-phase1-frontend:目录 + 5 文件骨架(本版)
-- [ ] v0.6.0:接入 `data/works.json` 列表渲染
+- [x] v0.5.0-phase1-frontend:目录 + 5 文件骨架
+- [x] v0.6.0-phase1-frontend-works:Works 组件接 /api/works 列表 + 详情(本版)
 - [ ] v0.7.0:精读页 5 维评分可视化
 - [ ] v0.8.0:写作反馈表单 + 5 维雷达图
 - [ ] Phase 2:shadcn/ui + Tailwind 重构

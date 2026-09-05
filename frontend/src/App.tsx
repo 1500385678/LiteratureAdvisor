@@ -1,10 +1,88 @@
-import { Routes, Route, Link } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { Routes, Route, Link, useParams } from 'react-router-dom'
+import { fetchWorks, fetchWork, type Work, type WorksListResponse } from './api/works'
 
-// 4 路由占位(Phase 1 第 5 步骨架,消费面按 4 主轴子项补齐)
-function Works() { return <div><h2>作品库</h2><p>GET /api/works · 待接入</p></div> }
-function WorkDetail() { return <div><h2>作品详情</h2><p>GET /api/works/:id · 待接入</p></div> }
-function Analyze() { return <div><h2>文本精读</h2><p>GET /api/analyze/:work_id · 待接入</p></div> }
-function Feedback() { return <div><h2>写作反馈</h2><p>POST /api/feedback · 待接入</p></div> }
+// Phase 1 第 5 步 v0.6.0
+// 作品库:接 /api/works 渲染列表,失败给出提示
+function Works() {
+  const [data, setData] = useState<WorksListResponse | null>(null)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    fetchWorks().then(setData).catch((e) => setError(String(e)))
+  }, [])
+
+  if (error) return <div style={{ color: 'crimson' }}>加载失败:{error}</div>
+  if (!data) return <div>加载中…</div>
+
+  return (
+    <div>
+      <h2>作品库</h2>
+      <p style={{ color: '#666', fontSize: 13 }}>
+        共 {data.count} 部 · 库内 {data.total_in_db} 部 · 入库进度 {data.progress}
+      </p>
+      <ul style={{ listStyle: 'none', padding: 0 }}>
+        {data.items.map((w) => (
+          <li
+            key={w.id}
+            style={{
+              borderBottom: '1px solid #eee',
+              padding: '12px 0',
+            }}
+          >
+            <Link to={`/works/${w.id}`} style={{ fontSize: 18, fontWeight: 600 }}>
+              {w.title}
+            </Link>
+            {w.title_en && <span style={{ color: '#888', marginLeft: 8 }}>· {w.title_en}</span>}
+            <div style={{ fontSize: 13, color: '#444', marginTop: 4 }}>
+              {w.author} · {w.dynasty ?? '?'} · {w.genre}
+            </div>
+            {w.themes && w.themes.length > 0 && (
+              <div style={{ fontSize: 12, color: '#888', marginTop: 4 }}>
+                主题:{w.themes.join(' / ')}
+              </div>
+            )}
+          </li>
+        ))}
+      </ul>
+    </div>
+  )
+}
+
+function WorkDetail() {
+  const { id } = useParams<{ id: string }>()
+  const [work, setWork] = useState<Work | null>(null)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!id) return
+    fetchWork(id).then(setWork).catch((e) => setError(String(e)))
+  }, [id])
+
+  if (error) return <div style={{ color: 'crimson' }}>加载失败:{error}</div>
+  if (!work) return <div>加载中…</div>
+
+  return (
+    <div>
+      <h2>{work.title}</h2>
+      <p style={{ color: '#666' }}>
+        {work.author} · {work.dynasty} · {work.genre}
+      </p>
+      <p>主题:{work.themes?.join(' / ')}</p>
+      <p>
+        <Link to="/works">← 返回作品库</Link>
+      </p>
+    </div>
+  )
+}
+
+function Analyze() {
+  return <div><h2>文本精读</h2><p>GET /api/analyze/:work_id · 待接入 LLM(v0.7.0)</p></div>
+}
+
+function Feedback() {
+  return <div><h2>写作反馈</h2><p>POST /api/feedback · 表单 UI 待补(v0.8.0)</p></div>
+}
 
 export default function App() {
   return (
@@ -28,7 +106,7 @@ export default function App() {
         </Routes>
       </main>
       <footer style={{ marginTop: 48, fontSize: 12, color: '#666' }}>
-        v0.5.0-phase1-frontend · FastAPI 8000 · Vite 5173
+        v0.6.0-phase1-frontend-works · FastAPI 8000 · Vite 5173
       </footer>
     </div>
   )
