@@ -1,5 +1,51 @@
+# LiteratureAdvisor · git 仓库忽略
+# 注:Python 缓存/venv/前端产物在 .dockerignore 与 frontend/.gitignore 已分别覆盖,
+#     本文件聚焦 git 仓库层独有(Python 构建/测试覆盖/环境变量/数据 DB)的兜底
+
+# 系统
 .DS_Store
-*.log
-node_modules/
-.venv/
+
+# Python · 构建
 __pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+*.egg
+build/
+dist/
+.eggs/
+
+# Python · 虚拟环境
+.venv/
+venv/
+env/
+
+# Python · 测试与静态检查
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.tox/
+
+# 环境变量(允许 .env.example 提交)
+.env
+.env.*
+!.env.example
+
+# 数据 / DB(works.json / authors.json 等已知数据文件以显式路径追踪)
+*.sqlite
+*.sqlite3
+*.db
+
+# 日志
+*.log
+logs/
+
+# 编辑器
+.vscode/
+.idea/
+*.swp
+*.swo
